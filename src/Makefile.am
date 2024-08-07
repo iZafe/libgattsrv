@@ -1,6 +1,8 @@
-# Build a static library (libggk.a)
-noinst_LIBRARIES = libggk.a
-libggk_a_CXXFLAGS = -fPIC -Wall -Wextra -std=c++11 $(GLIB_CFLAGS) $(GIO_CFLAGS) $(GOBJECT_CFLAGS)
+# Build a static library (libggk.a), standalone and install both in --prefix and --bindir path
+lib_LIBRARIES = libggk.a
+
+
+libggk_a_CXXFLAGS = -fPIC -Wall -Wextra -std=gnu++17 $(GLIB_CFLAGS) $(GIO_CFLAGS) $(GOBJECT_CFLAGS)
 libggk_a_SOURCES = DBusInterface.cpp \
                    DBusInterface.h \
                    DBusMethod.cpp \
@@ -40,9 +42,12 @@ libggk_a_SOURCES = DBusInterface.cpp \
                    TickEvent.h \
                    Utils.cpp \
                    Utils.h
+
 # Build our standalone server (linking statically with libggk.a, linking dynamically with GLib)
-standalone_CXXFLAGS = -fPIC -Wall -Wextra -std=c++11
-noinst_PROGRAMS = standalone
+# We can remove this after test
+bin_PROGRAMS = standalone
+standalone_CXXFLAGS = -fPIC -Wall -Wextra -std=gnu++17 
 standalone_SOURCES = standalone.cpp
-standalone_LDADD = libggk.a
-standalone_LDLIBS = $(GLIB_LIBS) $(GIO_LIBS) $(GOBJECT_LIBS)
+standalone_LDADD = libggk.a -lglib-2.0 -lgio-2.0 -lgobject-2.0 
+standalone_LDLIBS = $(GLIB_LIBS) $(GIO_LIBS) $(GOBJECT_LIBS) 
+
