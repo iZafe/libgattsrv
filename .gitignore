@@ -1,0 +1,42 @@
+# Compiled object files
+*.o
+*.lo
+*.la
+
+# Libraries
+*.a
+*.lib
+
+# Build directories
+/build/
+*build-aux/
+
+# Auto-generated files
+aclocal.m4
+configure
+src/.deps/
+autom4te.cache/
+config.h
+config.h.in
+config.h.in~
+config.status
+configure
+configure~
+Makefile
+Makefile.in
+src/#
+src/am--include-marker
+src/standalone
+stamp-h1
+
+# Logs
+*.log
+*.out
+
+# Temporary files
+*.tmp
+*.swp
+
+# Additional files and directories to ignore
+.vscode/
+code
