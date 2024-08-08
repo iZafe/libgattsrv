@@ -35,7 +35,7 @@
 #include "Globals.h"
 #include "DBusObjectPath.h"
 #include "Logger.h"
-#include "Server.h"
+#include "DosellGatt.h"
 
 namespace ggk {
 

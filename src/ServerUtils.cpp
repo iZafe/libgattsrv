@@ -185,7 +185,7 @@ void ServerUtils::getManagedObjects(GDBusMethodInvocation *pInvocation)
 	Logger::debug(SSTR << "Reporting managed objects");
 
 	GVariantBuilder *pObjectArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
-	for (const DBusObject &object : TheServer->getObjects())
+	for (const DBusObject &object : THESERVER->getObjects())
 	{
 		addManagedObjectsNode(object, DBusObjectPath(""), pObjectArray);
 	}

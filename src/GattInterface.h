@@ -30,7 +30,7 @@
 #include "DBusInterface.h"
 #include "GattProperty.h"
 #include "GattUuid.h"
-#include "Server.h"
+#include "DosellGatt.h"
 #include "Utils.h"
 
 namespace ggk {
@@ -142,7 +142,7 @@ struct GattInterface : DBusInterface
 	template<typename T>
 	T getDataValue(const char *pName, const T defaultValue) const
 	{
-		const void *pData = TheServer->getDataGetter()(pName);
+		const void *pData = THESERVER->getDataGetter()(pName);
 		return nullptr == pData ? defaultValue : *static_cast<const T *>(pData);
 	}
 
@@ -156,7 +156,7 @@ struct GattInterface : DBusInterface
 	template<typename T>
 	T getDataPointer(const char *pName, const T defaultValue) const
 	{
-		const void *pData = TheServer->getDataGetter()(pName);
+		const void *pData = THESERVER->getDataGetter()(pName);
 		return nullptr == pData ? defaultValue : static_cast<const T>(pData);
 	}
 
@@ -171,7 +171,7 @@ struct GattInterface : DBusInterface
 	template<typename T>
 	bool setDataValue(const char *pName, const T value) const
 	{
-		return TheServer->getDataSetter()(pName, static_cast<const void *>(&value)) != 0;
+		return THESERVER->getDataSetter()(pName, static_cast<const void *>(&value)) != 0;
 	}
 
 	// Sends a data pointer from the server back to the application through the server's registered data setter
@@ -185,7 +185,7 @@ struct GattInterface : DBusInterface
 	template<typename T>
 	bool setDataPointer(const char *pName, const T pointer) const
 	{
-		return TheServer->getDataSetter()(pName, static_cast<const void *>(pointer)) != 0;
+		return THESERVER->getDataSetter()(pName, static_cast<const void *>(pointer)) != 0;
 	}
 
 	// When responding to a ReadValue method, we need to return a GVariant value in the form "(ay)" (a tuple containing an array of

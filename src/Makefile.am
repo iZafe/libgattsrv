@@ -10,6 +10,8 @@ libggk_a_SOURCES = DBusInterface.cpp \
                    DBusObject.cpp \
                    DBusObject.h \
                    DBusObjectPath.h \
+                   DosellGatt.cpp \
+                   DosellGatt.h\
                    GattCharacteristic.cpp \
                    GattCharacteristic.h \
                    GattDescriptor.cpp \
@@ -34,8 +36,6 @@ libggk_a_SOURCES = DBusInterface.cpp \
                    Logger.h \
                    Mgmt.cpp \
                    Mgmt.h \
-                   Server.cpp \
-                   Server.h \
                    ServerUtils.cpp \
                    ServerUtils.h \
                    standalone.cpp \

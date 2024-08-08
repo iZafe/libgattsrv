@@ -289,7 +289,8 @@ int main(int argc, char **ppArgv)
 	//     This first parameter (the service name) must match tha name configured in the D-Bus permissions. See the Readme.md file
 	//     for more information.
 	//
-	if (!ggkStart("gobbledegook", "Gobbledegook", "Gobbledegook", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
+	// first params must match the name in /etc/dbus-1/system.d/com.dosell.v3.conf and may not include dot eg. dosell.v3 is NOT valid
+	if (!ggkStart("dosell", "Dosell Version 3", "Dosell V3", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
 	{
 		return -1;
 	}
@@ -302,7 +303,7 @@ int main(int argc, char **ppArgv)
 		std::this_thread::sleep_for(std::chrono::seconds(15));
 
 		serverDataBatteryLevel = std::max(serverDataBatteryLevel - 1, 0);
-		ggkNofifyUpdatedCharacteristic("/com/gobbledegook/battery/level");
+		ggkNofifyUpdatedCharacteristic("/com/dosell/battery/level");
 	}
 
 	// Wait for the server to come to a complete stop (CTRL-C from the command line)
