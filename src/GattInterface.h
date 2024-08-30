@@ -146,6 +146,13 @@ struct GattInterface : DBusInterface
 		return nullptr == pData ? defaultValue : *static_cast<const T *>(pData);
 	}
 
+	//Support arrays
+	template<typename T>
+	const T* getDataValue(const char *pName, const T* defaultValue) const
+	{
+		const void *pData = THESERVER->getDataGetter()(pName);
+		return (nullptr == pData) ? defaultValue: static_cast<const T *>(pData);
+	}
 	// Return a data pointer from the server's registered data getter (GGKServerDataGetter)
 	//
 	// This method is for use with pointer types. For non-pointer types, use `getDataValue()` instead.
