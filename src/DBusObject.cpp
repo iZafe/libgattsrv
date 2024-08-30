@@ -228,7 +228,7 @@ std::string DBusObject::generateIntrospectionXML(int depth) const
 	}
 
 	xml += prefix + "<node name='" + getPathNode().toString() + "'>\n";
-	xml += prefix + "  <annotation name='" + TheServer->getServiceName() + ".DBusObject.path' value='" + getPath().toString() + "' />\n";
+	xml += prefix + "  <annotation name='" + THESERVER->getServiceName() + ".DBusObject.path' value='" + getPath().toString() + "' />\n";
 
 	for (std::shared_ptr<const DBusInterface> interface : interfaces)
 	{
@@ -245,7 +245,7 @@ std::string DBusObject::generateIntrospectionXML(int depth) const
 	if (depth == 0)
 	{
 		Logger::debug("Generated XML:");
-		Logger::debug(xml);
+		//Logger::debug(xml); // Piotrek(240817): We don't need to see that for now
 	}
 
 	return xml;

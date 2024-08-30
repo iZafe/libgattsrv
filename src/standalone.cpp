@@ -99,22 +99,6 @@
 
 #include "../include/Gobbledegook.h"
 
-//
-// Constants
-//
-
-// Maximum time to wait for any single async process to timeout during initialization
-static const int kMaxAsyncInitTimeoutMS = 30 * 1000;
-
-//
-// Server data values
-//
-
-// The battery level ("battery/level") reported by the server (see Server.cpp)
-static uint8_t serverDataBatteryLevel = 78;
-
-// The text string ("text/string") used by our custom text string service (see Server.cpp)
-static std::string serverDataTextString = "Hello, world!";
 
 //
 // Logging
@@ -141,6 +125,10 @@ void LogWarn(const char *pText) { std::cout << "WARNING: " << pText << std::endl
 void LogError(const char *pText) { std::cout << "!!ERROR: " << pText << std::endl; }
 void LogFatal(const char *pText) { std::cout << "**FATAL: " << pText << std::endl; }
 void LogAlways(const char *pText) { std::cout << "..Log..: " << pText << std::endl; }
+void LogAlways8(uint8_t value) { std::cout << "..Log.. <uint32_t>: " << value << std::endl; }
+void LogAlways16(uint16_t value) { std::cout << "..Log.. <uint64_t>: " << value << std::endl; }
+void LogAlways32(uint32_t value) { std::cout << "..Log.. <uint32_t>: " << value << std::endl; }
+void LogAlways64(uint64_t value) { std::cout << "..Log.. <uint64_t>: " << value << std::endl; }
 void LogTrace(const char *pText) { std::cout << "-Trace-: " << pText << std::endl; }
 
 //
@@ -163,6 +151,45 @@ void signalHandler(int signum)
 	}
 }
 
+
+//
+// Constants
+//
+
+// Maximum time to wait for any single async process to timeout during initialization
+static const int kMaxAsyncInitTimeoutMS = 30 * 1000;
+
+//
+// Server data values
+//
+
+// The battery level ("battery/level") reported by the server (see Server.cpp)
+static uint8_t serverDataBatteryLevel = 78;
+
+// The text string ("text/string") used by our custom text string service (see Server.cpp)
+static std::string serverDataTextString = "Hello, world! Maybe it's to loong for us";
+static std::string careToken = "0";// "GAKuZPRcL1";
+static std::string careTokenSetter = "";// "GAKuZPRcL1";//
+static std::string strAUTH = "1894573873000031214000";
+static std::string firstname = "Piotrek";
+static std::string lastName = "Kundu";
+static unsigned char strAUTHArray[] = {
+    0x18, 0x94, 0x57, 0x38, 0x73, 
+    0x00, 0x00, 0x31, 0x21, 0x40, 0x00
+};
+
+static uint64_t status = 0x1A; //(3<<3 for full battery);
+static uint64_t currentTime = 0x1a1b2c3d4e5f600f;
+static uint32_t birthday = 267462000; // Represents 12:00 PM UTC on August 27, 2024
+static uint32_t dispense_lastdate = 1724740800; // Represents 12:00 PM UTC on August 27, 2024
+static uint32_t dispense_nextttime = 1724827200; // +1 day (Represents 12:00 PM UTC on August 28, 2024)
+static uint32_t dispense_firsttime = 0xffffffff; //(0xffffffff = not defined);
+static std::string strFirstDispense = "2024-08-20T20:00:20Z"; //[YYYY-MM-DDTHH:MM:DD.00Z]
+static uint32_t control = 0;
+static uint8_t dispense_daysbeforelastdispensealert= 0;
+static uint8_t dispense_daysbeforelastdispensenotification = 0;
+static uint16_t uncollected_minutesbefore = 60;
+
 //
 // Server data management
 //
@@ -175,6 +202,9 @@ void signalHandler(int signum)
 // sending over stored values, so we don't need to take any additional steps to ensure thread-safety.
 const void *dataGetter(const char *pName)
 {
+	LogAlways("####     pName: ");
+	LogAlways(pName);
+
 	if (nullptr == pName)
 	{
 		LogError("NULL name sent to server data getter");
@@ -182,16 +212,89 @@ const void *dataGetter(const char *pName)
 	}
 
 	std::string strName = pName;
-
-	if (strName == "battery/level")
+	if (strName == "status")
 	{
-		return &serverDataBatteryLevel;
+		LogAlways64(status);
+		return &status;
 	}
-	else if (strName == "text/string")
+	else if (strName == "current/time")
 	{
-		return serverDataTextString.c_str();
+		LogAlways64(currentTime);
+		return &currentTime;
 	}
-
+	else if (strName == "birthday")
+	{
+		LogAlways32(birthday);
+		return &birthday;
+	}
+	else if (strName == "dispense/nexttime")
+	{
+		LogAlways32(dispense_nextttime);
+		return &dispense_nextttime;
+	}
+	else if (strName == "dispense/lastdate")
+	{
+		LogAlways32(dispense_lastdate);
+		return &dispense_lastdate;
+	}
+	else if (strName == "authentication/id")
+	{
+		// std::string strAuthenticationID = "89457387300003121400";
+		// std::string hex_str = strAuthenticationID.size() == 19 ? "0" : "1";
+		// hex_str += strAuthenticationID;
+		// hex_str += strAuthenticationID.size() == 19 ? "" : "0";   // Make sure there are n*2 hex digits
+		return &strAUTHArray;
+	}
+	else if (strName == "caregiver/token")
+	{
+		std::string local = "GAKuZPRcL1";
+		if (careTokenSetter  == local)
+		{
+			careToken = "1";
+			LogAlways("authenticated YES");
+		} 
+		else
+		{
+			LogAlways("authenticated NO !!!!!!!!!!!!!!!!!!!!!!!!1");
+		}
+		LogAlways(careToken.c_str());
+		return careToken.c_str();
+	}
+	else if (strName == "dispense/first")
+	{
+		LogAlways(strFirstDispense.c_str());
+		return strFirstDispense.c_str();
+	}
+	else if (strName == "name/first")
+	{
+		LogAlways(firstname.c_str());
+		return firstname.c_str();
+	}
+	else if (strName == "name/last")
+	{
+		LogAlways(lastName.c_str());
+		return lastName.c_str();
+	}
+	else if (strName == "control")
+	{
+		LogAlways64(control);
+		return &control;
+	}
+	else if (strName == "dispense/daysbeforelastdispensealert")
+	{
+		LogAlways8(dispense_daysbeforelastdispensealert);
+		return &dispense_daysbeforelastdispensealert;
+	}
+	else if (strName == "dispense/daysbeforelastdispensenotification")
+	{
+		LogAlways8(dispense_daysbeforelastdispensenotification);
+		return &dispense_daysbeforelastdispensenotification;
+	}
+	else if (strName == "uncollected/minutesbefore")
+	{
+		LogAlways16(uncollected_minutesbefore);
+		return &uncollected_minutesbefore;
+	}
 	LogWarn((std::string("Unknown name for server data getter request: '") + pName + "'").c_str());
 	return nullptr;
 }
@@ -217,7 +320,7 @@ int dataSetter(const char *pName, const void *pData)
 
 	std::string strName = pName;
 
-	if (strName == "battery/level")
+	if (strName == "status")
 	{
 		serverDataBatteryLevel = *static_cast<const uint8_t *>(pData);
 		LogDebug((std::string("Server data: battery level set to ") + std::to_string(serverDataBatteryLevel)).c_str());
@@ -227,6 +330,12 @@ int dataSetter(const char *pName, const void *pData)
 	{
 		serverDataTextString = static_cast<const char *>(pData);
 		LogDebug((std::string("Server data: text string set to '") + serverDataTextString + "'").c_str());
+		return 1;
+	}
+	else if (strName == "caregiver/token")
+	{
+		careTokenSetter = static_cast<const char *>(pData);
+		LogDebug((std::string("careTokenSetter data: text string set to '") + careTokenSetter + "'").c_str());
 		return 1;
 	}
 
@@ -289,7 +398,8 @@ int main(int argc, char **ppArgv)
 	//     This first parameter (the service name) must match tha name configured in the D-Bus permissions. See the Readme.md file
 	//     for more information.
 	//
-	if (!ggkStart("gobbledegook", "Gobbledegook", "Gobbledegook", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
+	// first params must match the name in /etc/dbus-1/system.d/com.dosell.v3.conf and may not include dot eg. dosell.v3 is NOT valid
+	if (!ggkStart("dosell", "Dosell", "Dosell", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
 	{
 		return -1;
 	}
@@ -302,7 +412,7 @@ int main(int argc, char **ppArgv)
 		std::this_thread::sleep_for(std::chrono::seconds(15));
 
 		serverDataBatteryLevel = std::max(serverDataBatteryLevel - 1, 0);
-		ggkNofifyUpdatedCharacteristic("/com/gobbledegook/battery/level");
+		//ggkNofifyUpdatedCharacteristic("/com/dosell/service/1/status");
 	}
 
 	// Wait for the server to come to a complete stop (CTRL-C from the command line)

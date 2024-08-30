@@ -43,7 +43,7 @@
 
 #include "Init.h"
 #include "Logger.h"
-#include "Server.h"
+#include "DosellGatt.h"
 
 namespace ggk
 {
@@ -484,7 +484,7 @@ int ggkStart(const char *pServiceName, const char *pAdvertisingName, const char 
 		Logger::info(SSTR << "Starting GGK server '" << pAdvertisingName << "'");
 
 		// Allocate our server
-		TheServer = std::make_shared<Server>(pServiceName, pAdvertisingName, pAdvertisingShortName, getter, setter);
+		THESERVER = std::make_shared<DosellGatt>(pServiceName, pAdvertisingName, pAdvertisingShortName, getter, setter);
 
 		// Start our server thread
 		try

@@ -69,10 +69,13 @@ bool GattCharacteristic::callMethod(const std::string &methodName, GDBusConnecti
 	return false;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 // Adds an event to the characteristic and returns a refereence to 'this` to enable method chaining in the server description
 //
 // NOTE: We specifically overload this method in order to accept our custom EventCallback type and transform it into a
 // TickEvent::Callback type. We also return our own type. This simplifies the server description by allowing call to chain.
+
 GattCharacteristic &GattCharacteristic::onEvent(int tickFrequency, void *pUserData, EventCallback callback)
 {
 	events.push_back(TickEvent(this, tickFrequency, reinterpret_cast<TickEvent::Callback>(callback), pUserData));
@@ -137,7 +140,7 @@ GattCharacteristic &GattCharacteristic::onUpdatedValue(UpdatedValueCallback call
 	pOnUpdatedValueFunc = callback;
 	return *this;
 }
-
+#pragma GCC diagnostic pop
 // Calls the onUpdatedValue method, if one was set.
 //
 // Returns false if there was no method set, otherwise, returns the boolean result of the method call.

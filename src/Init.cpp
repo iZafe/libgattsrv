@@ -39,7 +39,7 @@
 #include <chrono>
 #include <thread>
 
-#include "Server.h"
+#include "DosellGatt.h"
 #include "Globals.h"
 #include "Mgmt.h"
 #include "HciAdapter.h"
@@ -157,7 +157,7 @@ bool idleFunc(void *pUserData)
 	std::string interfaceName = entryString.substr(token+1);
 
 	// We have an update - call the onUpdatedValue method on the interface
-	std::shared_ptr<const DBusInterface> pInterface = TheServer->findInterface(objectPath, interfaceName);
+	std::shared_ptr<const DBusInterface> pInterface = THESERVER->findInterface(objectPath, interfaceName);
 	if (nullptr == pInterface)
 	{
 		Logger::warn(SSTR << "Unable to find interface for update: path[" << objectPath << "], name[" << interfaceName << "]");
@@ -343,7 +343,7 @@ gboolean onPeriodicTimer(gpointer pUserData)
 		//
 		// The real goal here is to have the objects tick their interfaces (see `onEvent()` method when adding interfaces inside
 		// 'Server::Server()'
-		for (const DBusObject &object : TheServer->getObjects())
+		for (const DBusObject &object : THESERVER->getObjects())
 		{
 			if (object.isPublished())
 			{
@@ -382,7 +382,7 @@ void onMethodCall
 	// Convert our input path into our custom type for path management
 	DBusObjectPath objectPath(pObjectPath);
 
-	if (!TheServer->callMethod(objectPath, pInterfaceName, pMethodName, pConnection, pParameters, pInvocation, pUserData))
+	if (!THESERVER->callMethod(objectPath, pInterfaceName, pMethodName, pConnection, pParameters, pInvocation, pUserData))
 	{
 		Logger::error(SSTR << " + Method not found: [" << pSender << "]:[" << objectPath << "]:[" << pInterfaceName << "]:[" << pMethodName << "]");
 		g_dbus_method_invocation_return_dbus_error(pInvocation, kErrorNotImplemented.c_str(), "This method is not implemented");
@@ -407,7 +407,7 @@ GVariant *onGetProperty
 	// Convert our input path into our custom type for path management
 	DBusObjectPath objectPath(pObjectPath);
 
-	const GattProperty *pProperty = TheServer->findProperty(objectPath, pInterfaceName, pPropertyName);
+	const GattProperty *pProperty = THESERVER->findProperty(objectPath, pInterfaceName, pPropertyName);
 
 	std::string propertyPath = std::string("[") + pSender + "]:[" + objectPath.toString() + "]:[" + pInterfaceName + "]:[" + pPropertyName + "]";
 	if (!pProperty)
@@ -452,7 +452,7 @@ gboolean onSetProperty
 	// Convert our input path into our custom type for path management
 	DBusObjectPath objectPath(pObjectPath);
 
-	const GattProperty *pProperty = TheServer->findProperty(objectPath, pInterfaceName, pPropertyName);
+	const GattProperty *pProperty = THESERVER->findProperty(objectPath, pInterfaceName, pPropertyName);
 
 	std::string propertyPath = std::string("[") + pSender + "]:[" + objectPath.toString() + "]:[" + pInterfaceName + "]:[" + pPropertyName + "]";
 	if (!pProperty)
@@ -578,12 +578,12 @@ void registerNodeHierarchy(GDBusNodeInfo *pNode, const DBusObjectPath &basePath 
 
 	GDBusInterfaceInfo **ppInterface = pNode->interfaces;
 
-	Logger::debug(SSTR << prefix << "+ " << pNode->path);
+	//Logger::debug(SSTR << prefix << "+ " << pNode->path);
 
 	while(nullptr != *ppInterface)
 	{
 		GError *pError = nullptr;
-		Logger::debug(SSTR << prefix << "    (iface: " << (*ppInterface)->name << ")");
+		// Logger::debug(SSTR << prefix << "    (iface: " << (*ppInterface)->name << ")");
 		guint registeredObjectId = g_dbus_connection_register_object
 		(
 			pBusConnection,             // GDBusConnection *connection
@@ -626,7 +626,7 @@ void registerNodeHierarchy(GDBusNodeInfo *pNode, const DBusObjectPath &basePath 
 void registerObjects()
 {
 	// Parse each object into an XML interface tree
-	for (const DBusObject &object : TheServer->getObjects())
+	for (const DBusObject &object : THESERVER->getObjects())
 	{
 		GError *pError = nullptr;
 		std::string xmlString = object.generateIntrospectionXML();
@@ -672,8 +672,8 @@ void configureAdapter()
 	Mgmt mgmt;
 
 	// Get our properly truncated advertising names
-	std::string advertisingName = Mgmt::truncateName(TheServer->getAdvertisingName());
-	std::string advertisingShortName = Mgmt::truncateShortName(TheServer->getAdvertisingShortName());
+	std::string advertisingName = Mgmt::truncateName(THESERVER->getAdvertisingName());
+	std::string advertisingShortName = Mgmt::truncateShortName(THESERVER->getAdvertisingShortName());
 
 	// Find out what our current settings are
 	HciAdapter::ControllerInformation info = HciAdapter::getInstance().getControllerInformation();
@@ -681,12 +681,12 @@ void configureAdapter()
 	// Are all of our settings the way we want them?
 	bool pwFlag = info.currentSettings.isSet(HciAdapter::EHciPowered) == true;
 	bool leFlag = info.currentSettings.isSet(HciAdapter::EHciLowEnergy) == true;
-	bool brFlag = info.currentSettings.isSet(HciAdapter::EHciBasicRate_EnhancedDataRate) == TheServer->getEnableBREDR();
-	bool scFlag = info.currentSettings.isSet(HciAdapter::EHciSecureConnections) == TheServer->getEnableSecureConnection();
-	bool bnFlag = info.currentSettings.isSet(HciAdapter::EHciBondable) == TheServer->getEnableBondable();
-	bool cnFlag = info.currentSettings.isSet(HciAdapter::EHciConnectable) == TheServer->getEnableConnectable();
-	bool diFlag = info.currentSettings.isSet(HciAdapter::EHciDiscoverable) == TheServer->getEnableDiscoverable();
-	bool adFlag = info.currentSettings.isSet(HciAdapter::EHciAdvertising) == TheServer->getEnableAdvertising();
+	bool brFlag = info.currentSettings.isSet(HciAdapter::EHciBasicRate_EnhancedDataRate) == THESERVER->getEnableBREDR();
+	bool scFlag = info.currentSettings.isSet(HciAdapter::EHciSecureConnections) == THESERVER->getEnableSecureConnection();
+	bool bnFlag = info.currentSettings.isSet(HciAdapter::EHciBondable) == THESERVER->getEnableBondable();
+	bool cnFlag = info.currentSettings.isSet(HciAdapter::EHciConnectable) == THESERVER->getEnableConnectable();
+	bool diFlag = info.currentSettings.isSet(HciAdapter::EHciDiscoverable) == THESERVER->getEnableDiscoverable();
+	bool adFlag = info.currentSettings.isSet(HciAdapter::EHciAdvertising) == THESERVER->getEnableAdvertising();
 	bool anFlag = (advertisingName.length() == 0 || advertisingName == info.name) && (advertisingShortName.length() == 0 || advertisingShortName == info.shortName);
 
 	// If everything is setup already, we're done
@@ -711,43 +711,43 @@ void configureAdapter()
 		// Note that enabling this requries LE to already be enabled or this command will receive a 'rejected' result
 		if (!brFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableBREDR() ? "Enabling":"Disabling") << " BR/EDR");
-			if (!mgmt.setBredr(TheServer->getEnableBREDR())) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableBREDR() ? "Enabling":"Disabling") << " BR/EDR");
+			if (!mgmt.setBredr(THESERVER->getEnableBREDR())) { setRetry(); return; }
 		}
 
 		// Change the Secure Connectinos state?
 		if (!scFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableSecureConnection() ? "Enabling":"Disabling") << " Secure Connections");
-			if (!mgmt.setSecureConnections(TheServer->getEnableSecureConnection() ? 1 : 0)) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableSecureConnection() ? "Enabling":"Disabling") << " Secure Connections");
+			if (!mgmt.setSecureConnections(THESERVER->getEnableSecureConnection() ? 1 : 0)) { setRetry(); return; }
 		}
 
 		// Change the Bondable state?
 		if (!bnFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableBondable() ? "Enabling":"Disabling") << " Bondable");
-			if (!mgmt.setBondable(TheServer->getEnableBondable())) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableBondable() ? "Enabling":"Disabling") << " Bondable");
+			if (!mgmt.setBondable(THESERVER->getEnableBondable())) { setRetry(); return; }
 		}
 
 		// Change the Connectable state?
 		if (!cnFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableConnectable() ? "Enabling":"Disabling") << " Connectable");
-			if (!mgmt.setConnectable(TheServer->getEnableConnectable())) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableConnectable() ? "Enabling":"Disabling") << " Connectable");
+			if (!mgmt.setConnectable(THESERVER->getEnableConnectable())) { setRetry(); return; }
 		}
 
 		// Change the Discoverable state?
 		if (!diFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableDiscoverable() ? "Enabling":"Disabling") << " Discoverable");
-			if (!mgmt.setDiscoverable(TheServer->getEnableDiscoverable() ? 1 : 0, 0)) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableDiscoverable() ? "Enabling":"Disabling") << " Discoverable");
+			if (!mgmt.setDiscoverable(THESERVER->getEnableDiscoverable() ? 1 : 0, 0)) { setRetry(); return; }
 		}
 
 		// Change the Advertising state?
 		if (!adFlag)
 		{
-			Logger::debug(SSTR << (TheServer->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
-			if (!mgmt.setAdvertising(TheServer->getEnableAdvertising() ? 1 : 0)) { setRetry(); return; }
+			Logger::debug(SSTR << (THESERVER->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
+			if (!mgmt.setAdvertising(THESERVER->getEnableAdvertising() ? 1 : 0)) { setRetry(); return; }
 		}
 
 		// Set the name?
@@ -930,7 +930,7 @@ void doOwnedNameAcquire()
 	ownedNameId = g_bus_own_name_on_connection
 	(
 		pBusConnection,                    // GDBusConnection *connection
-		TheServer->getOwnedName().c_str(), // const gchar *name
+		THESERVER->getOwnedName().c_str(), // const gchar *name
 		G_BUS_NAME_OWNER_FLAGS_NONE,       // GBusNameOwnerFlags flags
 
 		// GBusNameAcquiredCallback name_acquired_handler
@@ -961,13 +961,13 @@ void doOwnedNameAcquire()
 			// If we don't have a periodicTimeout (which we use for error recovery) then we're sunk
 			if (0 == periodicTimeoutId)
 			{
-				Logger::fatal(SSTR << "Unable to acquire an owned name ('" << TheServer->getOwnedName() << "') on the bus");
+				Logger::fatal(SSTR << "Unable to acquire an owned name ('" << THESERVER->getOwnedName() << "') on the bus");
 				setServerHealth(EFailedInit);
 				shutdown();
 			}
 			else
 			{
-				Logger::warn(SSTR << "Owned name ('" << TheServer->getOwnedName() << "') lost");
+				Logger::warn(SSTR << "Owned name ('" << THESERVER->getOwnedName() << "') lost");
 				setRetryFailure();
 				return;
 			}
@@ -1058,7 +1058,7 @@ void initializationStateProcessor()
 	//
 	if (!bOwnedNameAcquired)
 	{
-		Logger::debug(SSTR << "Acquiring owned name: '" << TheServer->getOwnedName() << "'");
+		Logger::debug(SSTR << "Acquiring owned name: '" << THESERVER->getOwnedName() << "'");
 		doOwnedNameAcquire();
 		return;
 	}

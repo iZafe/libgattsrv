@@ -69,7 +69,8 @@ bool GattDescriptor::callMethod(const std::string &methodName, GDBusConnection *
 
 	return false;
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 // Adds an event to the descriptor and returns a refereence to 'this` to enable method chaining in the server description
 //
 // NOTE: We specifically overload this method in order to accept our custom EventCallback type and transform it into a
@@ -122,6 +123,7 @@ GattDescriptor &GattDescriptor::onWriteValue(MethodCallback callback)
 	addMethod("WriteValue", inArgs, nullptr, reinterpret_cast<DBusMethod::Callback>(callback));
 	return *this;
 }
+#pragma GCC diagnostic pop
 
 // Custom support for handling updates to our descriptor's value
 //

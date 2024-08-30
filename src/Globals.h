@@ -30,4 +30,4 @@
 
 // In order to avoid confusion, we should use the owned name here, so errors are like extensions to that name. This way, if a
 // client gets one of these errors, it'll be clear which server it came from.
-#define kErrorNotImplemented (TheServer->getOwnedName() + ".NotImplemented")
+#define kErrorNotImplemented (THESERVER->getOwnedName() + ".NotImplemented")

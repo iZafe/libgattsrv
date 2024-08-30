@@ -66,23 +66,23 @@ static void addManagedObjectsNode(const DBusObject &object, const DBusObjectPath
 	if (!object.getInterfaces().empty())
 	{
 		DBusObjectPath path = basePath + object.getPathNode();
-		Logger::debug(SSTR << "  Object: " << path);
+		//Logger::debug(SSTR << "  Object: " << path);
 
 		GVariantBuilder *pInterfaceArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 		for (std::shared_ptr<const DBusInterface> pInterface : object.getInterfaces())
 		{
-			Logger::debug(SSTR << "  + Interface (type: " << pInterface->getInterfaceType() << ")");
+			//Logger::debug(SSTR << "  + Interface (type: " << pInterface->getInterfaceType() << ")");
 
 			if (std::shared_ptr<const GattService> pService = TRY_GET_CONST_INTERFACE_OF_TYPE(pInterface, GattService))
 			{
 				if (!pService->getProperties().empty())
 				{
-					Logger::debug(SSTR << "    GATT Service interface: " << pService->getName());
+					//Logger::debug(SSTR << "    GATT Service interface: " << pService->getName());
 
 					GVariantBuilder *pPropertyArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 					for (const GattProperty &property : pService->getProperties())
 					{
-						Logger::debug(SSTR << "      Property " << property.getName());
+						//Logger::debug(SSTR << "      Property " << property.getName());
 						g_variant_builder_add
 						(
 							pPropertyArray,
@@ -105,12 +105,12 @@ static void addManagedObjectsNode(const DBusObject &object, const DBusObjectPath
 			{
 				if (!pCharacteristic->getProperties().empty())
 				{
-					Logger::debug(SSTR << "    GATT Characteristic interface: " << pCharacteristic->getName());
+					// Logger::debug(SSTR << "    GATT Characteristic interface: " << pCharacteristic->getName());
 
 					GVariantBuilder *pPropertyArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 					for (const GattProperty &property : pCharacteristic->getProperties())
 					{
-						Logger::debug(SSTR << "      Property " << property.getName());
+						// Logger::debug(SSTR << "      Property " << property.getName());
 						g_variant_builder_add
 						(
 							pPropertyArray,
@@ -133,12 +133,12 @@ static void addManagedObjectsNode(const DBusObject &object, const DBusObjectPath
 			{
 				if (!pDescriptor->getProperties().empty())
 				{
-					Logger::debug(SSTR << "    GATT Descriptor interface: " << pDescriptor->getName());
+					// Logger::debug(SSTR << "    GATT Descriptor interface: " << pDescriptor->getName());
 
 					GVariantBuilder *pPropertyArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 					for (const GattProperty &property : pDescriptor->getProperties())
 					{
-						Logger::debug(SSTR << "      Property " << property.getName());
+						// Logger::debug(SSTR << "      Property " << property.getName());
 						g_variant_builder_add
 						(
 							pPropertyArray,
@@ -182,10 +182,10 @@ static void addManagedObjectsNode(const DBusObject &object, const DBusObjectPath
 // Builds the response to the method call `GetManagedObjects` from the D-Bus interface `org.freedesktop.DBus.ObjectManager`
 void ServerUtils::getManagedObjects(GDBusMethodInvocation *pInvocation)
 {
-	Logger::debug(SSTR << "Reporting managed objects");
+	// Logger::debug(SSTR << "Reporting managed objects");
 
 	GVariantBuilder *pObjectArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
-	for (const DBusObject &object : TheServer->getObjects())
+	for (const DBusObject &object : THESERVER->getObjects())
 	{
 		addManagedObjectsNode(object, DBusObjectPath(""), pObjectArray);
 	}
