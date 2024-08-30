@@ -69,289 +69,504 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 	// We're going to build off of this object, so we need to get a reference to the instance of the object as it resides in the
 	// list (and not the object that would be added to the list.)
 	mObjects.back()
-//int dude = 02;
+	// Both GATT Generic Access Service (1800) and GATT Generic Attribute Service (0x1801) are created and managed by BlueZ
+	// Trying to create them here will render "DBus.Error:org.bluez.Error.Failed: Failed to create entry in database"
+	
 	// Service: Device Information (0x180A)
-	//
-	// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.device_information.xml
-	.gattServiceBegin("device", "180A")
-
-		// Characteristic: Manufacturer Name String (0x2A29)
-		//
-		// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.manufacturer_name_string.xml
-		.gattCharacteristicBegin("mfgr_name", "2A29", {"read"})
-
-			// Standard characteristic "ReadValue" method call
+	.gattServiceBegin("device/information", "180A")
+		.gattCharacteristicBegin("manufacture/name", "2A29", {"read"}) 
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				self.methodReturnValue(pInvocation, "Acme Inc.", true);
+				self.methodReturnValue(pInvocation, "Dosell AB", true);
 			})
 
 		.gattCharacteristicEnd()
-
-		// Characteristic: Model Number String (0x2A24)
-		//
-		// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.model_number_string.xml
-		.gattCharacteristicBegin("model_num", "2A24", {"read"})
-
-			// Standard characteristic "ReadValue" method call
+		.gattCharacteristicBegin("hardware/revision", "2A27", {"read"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				self.methodReturnValue(pInvocation, "Marvin-PA", true);
+				self.methodReturnValue(pInvocation, "V3", true);
 			})
-
+		.gattDescriptorBegin("description", "2901", {"read"})
+			.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+			{
+				const char *pDescription = "Device Information";
+				self.methodReturnValue(pInvocation, pDescription, true);
+			})
+		.gattDescriptorEnd()
 		.gattCharacteristicEnd()
 
 	.gattServiceEnd()
-
-	// Battery Service (0x180F)
-	//
-	// This is a fake battery service that conforms to org.bluetooth.service.battery_service. For details, see:
-	//
-	//     https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.battery_service.xml
-	//
-	// We also handle updates to the battery level from inside the server (see onUpdatedValue). There is an external method
-	// (see main.cpp) that updates our battery level and posts an update using ggkPushUpdateQueue. Those updates are used
-	// to notify us that our value has changed, which translates into a call to `onUpdatedValue` from the idleFunc (see
-	// Init.cpp).
-	.gattServiceBegin("battery", "180F")
-
-		// Characteristic: Battery Level (0x2A19)
-		//
-		// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.battery_level.xml
-		.gattCharacteristicBegin("level", "2A19", {"read", "notify"})
-
-			// Standard characteristic "ReadValue" method call
+	//     GATT Dosell Service-1 (6151EC38-ECFA-4EE0-BBF7-50C1B04F4322)
+	.gattServiceBegin("service/1", "6151EC38-ECFA-4EE0-BBF7-50C1B04F4322")
+		.gattCharacteristicBegin("authentication/id", "6151BE6E-ECFA-4EE0-BBF7-50C1B04F4322", {"read"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				uint8_t batteryLevel = self.getDataValue<uint8_t>("battery/level", 0);
-				self.methodReturnValue(pInvocation, batteryLevel, true);
+				// Retrieve the array pointer using getDataValue
+				auto pTextString = self.getDataValue<unsigned char>("authentication/id", nullptr);
+				// int arrayLength = self.getDataValue<int>("authentication/id_length", nullptr);
+				// Check if data was retrieved and is valid
+				if (pTextString == nullptr)
+				{
+					self.methodReturnValue(pInvocation, nullptr, false);
+					return;
+				}
+				GVariant* variant = Utils::gvariantFromByteArray(pTextString, 11);
+				self.methodReturnVariant(pInvocation, variant, true);
 			})
-
-			// Handle updates to the battery level
-			//
-			// Here we use the onUpdatedValue to set a callback that isn't exposed to BlueZ, but rather allows us to manage
-			// updates to our value. These updates may have come from our own server or some other source.
-			//
-			// We can handle updates in any way we wish, but the most common use is to send a change notification.
-			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
-			{
-				uint8_t batteryLevel = self.getDataValue<uint8_t>("battery/level", 0);
-				self.sendChangeNotificationValue(pConnection, batteryLevel);
-				return true;
-			})
-
-		.gattCharacteristicEnd()
-	.gattServiceEnd()
-
-	// Current Time Service (0x1805)
-	//
-	// This is a time service that conforms to org.bluetooth.service.current_time. For details, see:
-	//
-	//    https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.current_time.xml
-	//
-	// Like the battery service, this also makes use of events. This one updates the time every tick.
-	//
-	// This showcases the use of events (see the call to .onEvent() below) for periodic actions. In this case, the action
-	// taken is to update time every tick. This probably isn't a good idea for a production service, but it has been quite
-	// useful for testing to ensure we're connected and updating.
-	.gattServiceBegin("time", "1805")
-
-		// Characteristic: Current Time (0x2A2B)
-		//
-		// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.current_time.xml
-		.gattCharacteristicBegin("current", "2A2B", {"read", "notify"})
-
-			// Standard characteristic "ReadValue" method call
-			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
-			{
-				self.methodReturnVariant(pInvocation, ServerUtils::gvariantCurrentTime(), true);
-			})
-
-			// Update the time every tick of the periodic timer
-			//
-			// We'll send an change notification to any subscribed clients with the latest value
-			.onEvent(1, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
-			{
-				self.sendChangeNotificationVariant(pConnection, ServerUtils::gvariantCurrentTime());
-			})
-
-		.gattCharacteristicEnd()
-
-		// Characteristic: Local Time Information (0x2A0F)
-		//
-		// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.local_time_information.xml
-		.gattCharacteristicBegin("local", "2A0F", {"read"})
-
-			// Standard characteristic "ReadValue" method call
-			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
-			{
-				self.methodReturnVariant(pInvocation, ServerUtils::gvariantLocalTime(), true);
-			})
-
-		.gattCharacteristicEnd()
-	.gattServiceEnd()
-
-	// Custom read/write text string service (00000001-1E3C-FAD4-74E2-97A033F1BFAA)
-	//
-	// This service will return a text string value (default: 'Hello, world!'). If the text value is updated, it will notify
-	// that the value has been updated and provide the new text from that point forward.
-	.gattServiceBegin("text", "00000001-1E3C-FAD4-74E2-97A033F1BFAA")
-
-		// Characteristic: String value (custom: 00000002-1E3C-FAD4-74E2-97A033F1BFAA)
-		.gattCharacteristicBegin("string", "00000002-1E3C-FAD4-74E2-97A033F1BFAA", {"read", "write", "notify"})
-
-			// Standard characteristic "ReadValue" method call
-			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
-			{
-				const char *pTextString = self.getDataPointer<const char *>("text/string", "");
-				self.methodReturnValue(pInvocation, pTextString, true);
-			})
-
-			// Standard characteristic "WriteValue" method call
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				// Update the text string value
 				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
-				self.setDataPointer("text/string", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
-
-				// Since all of these methods (onReadValue, onWriteValue, onUpdateValue) are all part of the same
-				// Characteristic interface (which just so happens to be the same interface passed into our self
-				// parameter) we can that parameter to call our own onUpdatedValue method
+				self.setDataPointer("authentication/id", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
 				self.callOnUpdatedValue(pConnection, pUserData);
-
-				// Note: Even though the WriteValue method returns void, it's important to return like this, so that a
-				// dbus "method_return" is sent, otherwise the client gets an error (ATT error code 0x0e"unlikely").
-				// Only "write-without-response" works without this
 				self.methodReturnVariant(pInvocation, NULL);
 			})
-
-			// Here we use the onUpdatedValue to set a callback that isn't exposed to BlueZ, but rather allows us to manage
-			// updates to our value. These updates may have come from our own server or some other source.
-			//
-			// We can handle updates in any way we wish, but the most common use is to send a change notification.
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
-				const char *pTextString = self.getDataPointer<const char *>("text/string", "");
+				std::string pName = "authentication/id"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("authentication/id", "");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
-
-			// GATT Descriptor: Characteristic User Description (0x2901)
-			// 
-			// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.characteristic_user_description.xml
 			.gattDescriptorBegin("description", "2901", {"read"})
-
-				// Standard descriptor "ReadValue" method call
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
 				{
-					const char *pDescription = "A mutable text string used for testing. Read and write to me, it tickles!";
+					const char *pDescription = "Authentication-ID (=ICCID) encoded as BCD coded string.";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		
+		// Status 6151ED7B-ECFA-4EE0-BBF7-50C1B04F4322
+		.gattCharacteristicBegin("status", "6151ED7B-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "notify"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "status"; //pName is the lookup name in dataGetter(const char *pName)
+				u_int64_t stat = self.getDataValue(pName.c_str(), static_cast<uint64_t>(0));
+				self.methodReturnValue(pInvocation, stat, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("status", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "status"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("status", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+			.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+			{
+				const char *pDescription = "Status";
+				self.methodReturnValue(pInvocation, pDescription, true);
+			})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		// Control 6151E030-ECFA-4EE0-BBF7-50C1B04F4322 
+		.gattCharacteristicBegin("control", "6151E030-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write", "notify"}) // "encrypt-write"
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("control", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("control", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Control";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		// Factory Reset Enable 61517D43-ECFA-4EE0-BBF7-50C1B04F4322 
+		.gattCharacteristicBegin("factory/reset/enable", "61517D43-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "factory/reset/enable"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("factory/reset/enable", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "factory/reset/enable"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("factory/reset/enable", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Factory Reset Enable";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		// Caregiver token 6151A71F-ECFA-4EE0-BBF7-50C1B04F4322 
+		.gattCharacteristicBegin("caregiver/token", "6151A71F-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "caregiver/token"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("caregiver/token", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "caregiver/token"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("caregiver/token", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Caregiver token";
 					self.methodReturnValue(pInvocation, pDescription, true);
 				})
 
 			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		// Current time 615124D3-ECFA-4EE0-BBF7-50C1B04F4322 
+		.gattCharacteristicBegin("current/time", "615124D3-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write", "notify"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("current/time", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("current/time", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Current time";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
 
+			.gattDescriptorEnd()
 		.gattCharacteristicEnd()
 	.gattServiceEnd()
-
-	// Custom ASCII time string service
-	//
-	// This service will simply return the result of asctime() of the current local time. It's a nice test service to provide
-	// a new value each time it is read.
-
-	// Service: ASCII Time (custom: 00000001-1E3D-FAD4-74E2-97A033F1BFEE)
-	.gattServiceBegin("ascii_time", "00000001-1E3D-FAD4-74E2-97A033F1BFEE")
-
-		// Characteristic: ASCII Time String (custom: 00000002-1E3D-FAD4-74E2-97A033F1BFEE)
-		.gattCharacteristicBegin("string", "00000002-1E3D-FAD4-74E2-97A033F1BFEE", {"read"})
-
-			// Standard characteristic "ReadValue" method call
+	//     GATT Dosell Service-2 (61515260-ECFA-4EE0-BBF7-50C1B04F4322)
+	.gattServiceBegin("service/2", "61515260-ECFA-4EE0-BBF7-50C1B04F4322")
+		.gattCharacteristicBegin("name/first", "2A8A", {"read", "write"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				// Get our local time string using asctime()
-				time_t timeVal = time(nullptr);
-				struct tm *pTimeStruct = localtime(&timeVal);
-				std::string timeString = Utils::trim(asctime(pTimeStruct));
-
-				self.methodReturnValue(pInvocation, timeString, true);
+				std::string pName = "name/first"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
 			})
-
-			// GATT Descriptor: Characteristic User Description (0x2901)
-			// 
-			// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.characteristic_user_description.xml
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("name/first", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "name/first"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("name/first", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
 			.gattDescriptorBegin("description", "2901", {"read"})
-
-				// Standard descriptor "ReadValue" method call
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
 				{
-					const char *pDescription = "Returns the local time (as reported by POSIX asctime()) each time it is read";
+					const char *pDescription = "First Name";
 					self.methodReturnValue(pInvocation, pDescription, true);
 				})
-
 			.gattDescriptorEnd()
-
 		.gattCharacteristicEnd()
-	.gattServiceEnd()
-
-	// Custom CPU information service (custom: 0000B001-1E3D-FAD4-74E2-97A033F1BFEE)
-	//
-	// This is a cheezy little service that reads the CPU info from /proc/cpuinfo and returns the count and model of the
-	// CPU. It may not work on all platforms, but it does provide yet another example of how to do things.
-
-	// Service: CPU Information (custom: 0000B001-1E3D-FAD4-74E2-97A033F1BFEE)
-	.gattServiceBegin("cpu", "0000B001-1E3D-FAD4-74E2-97A033F1BFEE")
-
-		// Characteristic: CPU Count (custom: 0000B002-1E3D-FAD4-74E2-97A033F1BFEE)
-		.gattCharacteristicBegin("count", "0000B002-1E3D-FAD4-74E2-97A033F1BFEE", {"read"})
-
-			// Standard characteristic "ReadValue" method call
+		.gattCharacteristicBegin("name/last", "2A90", {"read", "write"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				int16_t cpuCount = 0;
-				ServerUtils::getCpuInfo(cpuCount);
-				self.methodReturnValue(pInvocation, cpuCount, true);
+				std::string pName = "name/last"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
 			})
-
-			// GATT Descriptor: Characteristic User Description (0x2901)
-			// 
-			// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.characteristic_user_description.xml
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("name/last", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "name/last"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("name/last", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
 			.gattDescriptorBegin("description", "2901", {"read"})
-
-				// Standard descriptor "ReadValue" method call
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
 				{
-					const char *pDescription = "This might represent the number of CPUs in the system";
+					const char *pDescription = "Last Name";
 					self.methodReturnValue(pInvocation, pDescription, true);
 				})
-
 			.gattDescriptorEnd()
-
 		.gattCharacteristicEnd()
-
-		// Characteristic: CPU Model (custom: 0000B003-1E3D-FAD4-74E2-97A033F1BFEE)
-		.gattCharacteristicBegin("model", "0000B003-1E3D-FAD4-74E2-97A033F1BFEE", {"read"})
-
-			// Standard characteristic "ReadValue" method call
+		.gattCharacteristicBegin("birthday", "61516D3B-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				int16_t cpuCount = 0;
-				self.methodReturnValue(pInvocation, ServerUtils::getCpuInfo(cpuCount), true);
+				std::string pName = "birthday"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
 			})
-
-			// GATT Descriptor: Characteristic User Description (0x2901)
-			// 
-			// See: https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.characteristic_user_description.xml
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("birthday", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "birthday"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("birthday", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
 			.gattDescriptorBegin("description", "2901", {"read"})
-
-				// Standard descriptor "ReadValue" method call
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
 				{
-					const char *pDescription = "Possibly the model of the CPU in the system";
+					const char *pDescription = "Birthday";
 					self.methodReturnValue(pInvocation, pDescription, true);
 				})
-
 			.gattDescriptorEnd()
-
 		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("dispense/lastdate", "61515ACE-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/lastdate"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("dispense/lastdate", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/lastdate"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("dispense/lastdate", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Last Dispense Date";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("dispense/daysbeforelastdispensealert", "6151BD09-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/daysbeforelastdispensealert"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("dispense/daysbeforelastdispensealert", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/daysbeforelastdispensealert"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("dispense/daysbeforelastdispensealert", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Days Before Last Dispense Date Alert";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("dispense/daysbeforelastdispensenotification", "61517926-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/daysbeforelastdispensenotification"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("dispense/daysbeforelastdispensenotification", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/daysbeforelastdispensenotification"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("dispense/daysbeforelastdispensenotification", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Days Before Last Dispense Date Notification";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("uncollected/minutesbefore", "615135D0-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("uncollected/minutesbefore", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("uncollected/minutesbefore", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Minutes Before Uncollected Sachet Notification";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("dispense/nexttime", "6151B9E4-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "notify"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/nexttime"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("dispense/nexttime", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/nexttime"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("dispense/nexttime", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Next Dispense Time";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()
+		.gattCharacteristicBegin("dispense/first", "615135D1-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write"})
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/first"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.methodReturnValue(pInvocation, pTextString, true);
+			})
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				// Update the text string value
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				self.setDataPointer("dispense/first", Utils::stringFromGVariantByteArray(pAyBuffer).c_str());
+				self.callOnUpdatedValue(pConnection, pUserData);
+				self.methodReturnVariant(pInvocation, NULL);
+			})
+			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
+			{
+				std::string pName = "dispense/first"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>("dispense/first", "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+				return true;
+			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "First Dispense Time";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
+			.gattDescriptorEnd()
+		.gattCharacteristicEnd()		
 	.gattServiceEnd(); // << -- NOTE THE SEMICOLON
 
 	//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
