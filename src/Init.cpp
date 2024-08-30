@@ -578,12 +578,12 @@ void registerNodeHierarchy(GDBusNodeInfo *pNode, const DBusObjectPath &basePath 
 
 	GDBusInterfaceInfo **ppInterface = pNode->interfaces;
 
-	Logger::debug(SSTR << prefix << "+ " << pNode->path);
+	//Logger::debug(SSTR << prefix << "+ " << pNode->path);
 
 	while(nullptr != *ppInterface)
 	{
 		GError *pError = nullptr;
-		Logger::debug(SSTR << prefix << "    (iface: " << (*ppInterface)->name << ")");
+		// Logger::debug(SSTR << prefix << "    (iface: " << (*ppInterface)->name << ")");
 		guint registeredObjectId = g_dbus_connection_register_object
 		(
 			pBusConnection,             // GDBusConnection *connection
