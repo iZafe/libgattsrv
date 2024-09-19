@@ -183,7 +183,6 @@ static uint64_t currentTime = 0x1a1b2c3d4e5f600f;
 static uint32_t birthday = 267462000; // Represents 12:00 PM UTC on August 27, 2024
 static uint32_t dispense_lastdate = 1724740800; // Represents 12:00 PM UTC on August 27, 2024
 static uint32_t dispense_nextttime = 1724827200; // +1 day (Represents 12:00 PM UTC on August 28, 2024)
-static uint32_t dispense_firsttime = 0xffffffff; //(0xffffffff = not defined);
 static std::string strFirstDispense = "2024-08-20T20:00:20Z"; //[YYYY-MM-DDTHH:MM:DD.00Z]
 static uint32_t control = 0;
 static uint8_t dispense_daysbeforelastdispensealert= 0;
