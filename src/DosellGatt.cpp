@@ -124,7 +124,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "authentication/id"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("authentication/id", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -156,14 +156,14 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "status"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("status", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint64_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
 			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
 				std::string pName = "status"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint64_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 			})
 			.gattDescriptorBegin("description", "2901", {"read"})
@@ -179,7 +179,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint16_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -193,14 +193,14 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("control", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint16_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
 			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
 				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint16_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 			})
 			.gattDescriptorBegin("description", "2901", {"read"})
@@ -216,7 +216,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "factory/reset/enable"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -230,7 +230,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "factory/reset/enable"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("factory/reset/enable", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -247,7 +247,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "caregiver/token"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "0");
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -261,7 +261,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "caregiver/token"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("caregiver/token", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "0");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -279,7 +279,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint64_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -293,14 +293,14 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("current/time", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint64_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
 			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint64_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 			})
 			.gattDescriptorBegin("description", "2901", {"read"})
@@ -333,7 +333,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "name/first"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("name/first", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -363,7 +363,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "name/last"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("name/last", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -379,7 +379,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "birthday"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -393,7 +393,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "birthday"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("birthday", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -409,7 +409,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/lastdate"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -423,7 +423,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/lastdate"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("dispense/lastdate", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -439,7 +439,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/daysbeforelastdispensealert"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -453,7 +453,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/daysbeforelastdispensealert"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("dispense/daysbeforelastdispensealert", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -469,7 +469,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/daysbeforelastdispensenotification"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -483,7 +483,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/daysbeforelastdispensenotification"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("dispense/daysbeforelastdispensenotification", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -499,7 +499,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -513,7 +513,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("uncollected/minutesbefore", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint8_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -529,7 +529,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/nexttime"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -543,7 +543,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/nexttime"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("dispense/nexttime", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
@@ -559,7 +559,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/first"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0);
 				self.methodReturnValue(pInvocation, pTextString, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -573,7 +573,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "dispense/first"; //pName is the lookup name in dataGetter(const char *pName)
-				const char *pTextString = self.getDataPointer<const char *>("dispense/first", "");
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), static_cast<uint32_t>(0));
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
