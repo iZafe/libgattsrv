@@ -160,12 +160,18 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
-			.gattDescriptorBegin("description", "2901", {"read"})
-			.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
-				const char *pDescription = "Status";
-				self.methodReturnValue(pInvocation, pDescription, true);
+				std::string pName = "status"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
 			})
+			.gattDescriptorBegin("description", "2901", {"read"})
+				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
+				{
+					const char *pDescription = "Status";
+					self.methodReturnValue(pInvocation, pDescription, true);
+				})
 			.gattDescriptorEnd()
 		.gattCharacteristicEnd()
 		// Control 6151E030-ECFA-4EE0-BBF7-50C1B04F4322 
@@ -190,6 +196,12 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 				const char *pTextString = self.getDataPointer<const char *>("control", "");
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
+			})
+			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
+			{
+				std::string pName = "control"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
 			})
 			.gattDescriptorBegin("description", "2901", {"read"})
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
