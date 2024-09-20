@@ -1156,7 +1156,13 @@ void runServerThread()
 	initializationStateProcessor();
 
 	Logger::debug(SSTR << "Creating GLib main loop");
-	pMainLoop = g_main_loop_new(NULL, FALSE);
+
+    // Get the default main context and push it for this thread
+    GMainContext* context = g_main_context_default();
+    g_main_context_push_thread_default(context); // Push the context
+
+    // Create the main loop
+    pMainLoop = g_main_loop_new(context, FALSE);
 
 	// Add the idle function
 	//
@@ -1192,6 +1198,7 @@ void runServerThread()
 
 	// Cleanup
 	uninit();
+	g_main_context_pop_thread_default(context); // Pop the context
 }
 
 }; // namespace ggk
