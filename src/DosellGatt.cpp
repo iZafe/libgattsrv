@@ -297,6 +297,12 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 				self.sendChangeNotificationValue(pConnection, pTextString);
 				return true;
 			})
+			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
+			{
+				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
+				const char *pTextString = self.getDataPointer<const char *>(pName.c_str(), "");
+				self.sendChangeNotificationValue(pConnection, pTextString);
+			})
 			.gattDescriptorBegin("description", "2901", {"read"})
 				.onReadValue(DESCRIPTOR_METHOD_CALLBACK_LAMBDA
 				{
