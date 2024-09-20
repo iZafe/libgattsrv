@@ -148,7 +148,7 @@ struct GattInterface : DBusInterface
 
 	//Support arrays
 	template<typename T>
-	const T* getDataValue(const char *pName, const T* defaultValue) const
+	const T* getDataArrayValue(const char *pName, const T* defaultValue) const
 	{
 		const void *pData = THESERVER->getDataGetter()(pName);
 		return (nullptr == pData) ? defaultValue: static_cast<const T *>(pData);
