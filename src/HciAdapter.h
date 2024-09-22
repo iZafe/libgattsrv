@@ -29,6 +29,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 #include "HciSocket.h"
 #include "Utils.h"
@@ -36,6 +37,11 @@
 
 namespace ggk {
 
+	// -----------------------------------------------------------------------------------------------------------------------------
+	// LED STATUS
+	// -----------------------------------------------------------------------------------------------------------------------------
+	typedef void (*GGKLedStatusReceiver)(const int value);
+	
 class HciAdapter
 {
 public:
@@ -419,7 +425,9 @@ public:
 	//
 	// Accessors
 	//
-
+    void registerLedStatusReceiver(GGKLedStatusReceiver receiver) {
+        ledStatusReceiver_ = receiver;
+    }
 	// Returns the instance to this singleton class
 	static HciAdapter &getInstance()
 	{
@@ -436,6 +444,7 @@ public:
 	//
 	// Disallow copies of our singleton (c++11)
 	//
+	virtual ~HciAdapter();
 
 	HciAdapter(HciAdapter const&) = delete;
 	void operator=(HciAdapter const&) = delete;
@@ -475,7 +484,7 @@ public:
 
 private:
 	// Private constructor for our Singleton
-	HciAdapter() : commandResponseLock(commandResponseMutex), activeConnections(0) {}
+	HciAdapter() : commandResponseLock(commandResponseMutex), activeConnections(0), cancelFlag_(false) {}
 
 	// Uses a std::condition_variable to wait for a response event for the given `commandCode` or `timeoutMS` milliseconds.
 	//
@@ -506,6 +515,10 @@ private:
 
 	// Our active connection count
 	int activeConnections;
+
+ 	GGKLedStatusReceiver ledStatusReceiver_;  // Static LED status receiver
+    std::atomic<bool> cancelFlag_;    // Atomic cancellation flag
+    std::thread ledThread_;            // Thread for LED status updates
 };
 
 }; // namespace ggk

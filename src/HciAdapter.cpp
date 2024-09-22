@@ -336,6 +336,17 @@ void HciAdapter::runEventThread()
 			{
 				DeviceConnectedEvent event(responsePacket);
 				activeConnections += 1;
+				if (ledStatusReceiver_ && !ledThread_.joinable()) {
+					cancelFlag_ = false; // Reset cancel flag
+
+					// Start a thread with a lambda for LED status updates
+					ledThread_ = std::thread([this]() {
+						while (!cancelFlag_) {
+							ledStatusReceiver_(1); // Call for connection
+							std::this_thread::sleep_for(std::chrono::milliseconds(33));
+						}
+					});
+				}
 				Logger::debug(SSTR << "  > Connection count incremented to " << activeConnections);
 				break;
 			}
@@ -346,6 +357,14 @@ void HciAdapter::runEventThread()
 				if (activeConnections > 0)
 				{
 					activeConnections -= 1;
+					if (ledStatusReceiver_ && activeConnections == 0) {
+						ledStatusReceiver_(0); // Call for disconnection
+						cancelFlag_ = true;  // Signal the thread to stop
+						if (ledThread_.joinable()) {
+							ledThread_.join(); // Wait for the thread to finish
+						}
+						ledStatusReceiver_(0); // Call for disconnection
+					}
 					Logger::debug(SSTR << "  > Connection count decremented to " << activeConnections);
 				}
 				else
@@ -559,4 +578,12 @@ void HciAdapter::setCommandResponse(uint16_t commandCode)
 	cvCommandResponse.notify_one();
 }
 
+HciAdapter::~HciAdapter() 
+{
+    // Clean up the thread if it is joinable
+    if (ledThread_.joinable()) {
+        cancelFlag_ = true;  // Signal to stop the thread
+        ledThread_.join();    // Wait for the thread to finish
+    }
+}
 }; // namespace ggk

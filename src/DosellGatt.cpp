@@ -488,7 +488,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
 				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
-				auto pValue = self.getDataValue<const uint8_t>(pName.c_str(), 0);
+				auto pValue = self.getDataValue<const uint16_t>(pName.c_str(), 0);
 				self.methodReturnValue(pInvocation, pValue, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -502,7 +502,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "uncollected/minutesbefore"; //pName is the lookup name in dataGetter(const char *pName)
-				auto pValue = self.getDataValue<const uint8_t>(pName.c_str(), 0);
+				auto pValue = self.getDataValue<const uint16_t>(pName.c_str(), 0);
 				self.sendChangeNotificationValue(pConnection, pValue);
 				return true;			})
 			.gattDescriptorBegin("description", "2901", {"read"})
