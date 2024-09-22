@@ -79,6 +79,12 @@ extern "C"
 	void ggkLogRegisterTrace(GGKLogReceiver receiver);
 
 	// -----------------------------------------------------------------------------------------------------------------------------
+	// LED STATUS
+	// -----------------------------------------------------------------------------------------------------------------------------
+	typedef void (*GGKLedStatusReceiver)(const int value);
+	void ggkRegisterLedStatusReceiver(GGKLedStatusReceiver receiver);
+	
+	// -----------------------------------------------------------------------------------------------------------------------------
 	// SERVER DATA
 	// -----------------------------------------------------------------------------------------------------------------------------
 
@@ -297,7 +303,7 @@ extern "C"
 
 	// Convert a `GGKServerHealth` into a human-readable string
 	const char *ggkGetServerHealthString(enum GGKServerHealth state);
-
+	bool ggkIsConnected();
 #ifdef __cplusplus
 }
 #endif //__cplusplus
