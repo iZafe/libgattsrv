@@ -42,6 +42,7 @@
 #include <mutex>
 
 #include "Init.h"
+#include "HciAdapter.h"
 #include "Logger.h"
 #include "DosellGatt.h"
 
@@ -537,4 +538,16 @@ int ggkStart(const char *pServiceName, const char *pAdvertisingName, const char 
 		Logger::error(SSTR << "Unknown exception during ggkStart()");
 		return 0;
 	}
+}
+
+bool ggkIsConnected()
+{	
+	bool connected = HciAdapter::getInstance().getActiveConnectionCount() > 0;
+	Logger::debug(SSTR << "ggkIsConnected()" << connected ? "TRUE" : "FALSE");
+	return connected;
+}
+void ggkRegisterLedStatusReceiver(GGKLedStatusReceiver receiver)
+{
+	Logger::debug(SSTR << "Registred led status receiver.");
+	HciAdapter::getInstance().registerLedStatusReceiver(receiver);
 }
