@@ -302,7 +302,7 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 				self.sendChangeNotificationValue(pConnection, pValue);
 				return true;
 			})
-			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
+			.onEvent(5, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
 				auto pValue = self.getDataArrayValue<const char>(pName.c_str(), 0);
