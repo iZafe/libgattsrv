@@ -578,7 +578,7 @@ void registerNodeHierarchy(GDBusNodeInfo *pNode, const DBusObjectPath &basePath 
 
 	GDBusInterfaceInfo **ppInterface = pNode->interfaces;
 
-	//Logger::debug(SSTR << prefix << "+ " << pNode->path);
+	Logger::debug(SSTR << prefix << "+ " << pNode->path);
 
 	while(nullptr != *ppInterface)
 	{

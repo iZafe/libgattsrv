@@ -277,9 +277,15 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 		.gattCharacteristicBegin("current/time", "615124D3-ECFA-4EE0-BBF7-50C1B04F4322", {"read", "write", "notify"})
 			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
-				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				auto pValue = self.getDataValue<const uint64_t>(pName.c_str(), 0);
-				self.methodReturnValue(pInvocation, pValue, true);
+				auto pValue = self.getDataArrayValue<unsigned char>("current/time", nullptr);
+				// Check if data was retrieved and is valid
+				if (pValue == nullptr)
+				{
+					self.methodReturnValue(pInvocation, nullptr, false);
+					return;
+				}
+				GVariant* variant = Utils::gvariantFromByteArray(pValue, 5);
+				self.methodReturnVariant(pInvocation, variant, true);
 			})
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
 			{
@@ -292,14 +298,14 @@ DosellGatt::DosellGatt(const std::string &serviceName, const std::string &advert
 			.onUpdatedValue(CHARACTERISTIC_UPDATED_VALUE_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				auto pValue = self.getDataValue<const uint64_t>(pName.c_str(), 0);
+				auto pValue = self.getDataArrayValue<const char>(pName.c_str(), 0);
 				self.sendChangeNotificationValue(pConnection, pValue);
 				return true;
 			})
 			.onEvent(2, nullptr, CHARACTERISTIC_EVENT_CALLBACK_LAMBDA
 			{
 				std::string pName = "current/time"; //pName is the lookup name in dataGetter(const char *pName)
-				auto pValue = self.getDataValue<const uint64_t>(pName.c_str(), 0);
+				auto pValue = self.getDataArrayValue<const char>(pName.c_str(), 0);
 				self.sendChangeNotificationValue(pConnection, pValue);
 			})
 			.gattDescriptorBegin("description", "2901", {"read"})

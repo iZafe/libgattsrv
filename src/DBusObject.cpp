@@ -245,7 +245,7 @@ std::string DBusObject::generateIntrospectionXML(int depth) const
 	if (depth == 0)
 	{
 		Logger::debug("Generated XML:");
-		//Logger::debug(xml); // Piotrek(240817): We don't need to see that for now
+		Logger::debug(xml); // Piotrek(240817): We don't need to see that for now
 	}
 
 	return xml;

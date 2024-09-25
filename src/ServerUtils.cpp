@@ -66,23 +66,23 @@ static void addManagedObjectsNode(const DBusObject &object, const DBusObjectPath
 	if (!object.getInterfaces().empty())
 	{
 		DBusObjectPath path = basePath + object.getPathNode();
-		//Logger::debug(SSTR << "  Object: " << path);
+		Logger::debug(SSTR << "  Object: " << path);
 
 		GVariantBuilder *pInterfaceArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 		for (std::shared_ptr<const DBusInterface> pInterface : object.getInterfaces())
 		{
-			//Logger::debug(SSTR << "  + Interface (type: " << pInterface->getInterfaceType() << ")");
+			Logger::debug(SSTR << "  + Interface (type: " << pInterface->getInterfaceType() << ")");
 
 			if (std::shared_ptr<const GattService> pService = TRY_GET_CONST_INTERFACE_OF_TYPE(pInterface, GattService))
 			{
 				if (!pService->getProperties().empty())
 				{
-					//Logger::debug(SSTR << "    GATT Service interface: " << pService->getName());
+					Logger::debug(SSTR << "    GATT Service interface: " << pService->getName());
 
 					GVariantBuilder *pPropertyArray = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 					for (const GattProperty &property : pService->getProperties())
 					{
-						//Logger::debug(SSTR << "      Property " << property.getName());
+						Logger::debug(SSTR << "      Property " << property.getName());
 						g_variant_builder_add
 						(
 							pPropertyArray,
